@@ -12,34 +12,38 @@ type Props = {
   onToggleAllTodos: () => Promise<void>;
 };
 
-export const TodoHeader: React.FC<Props> = ({
-  isLoading,
-  areAllTodosCompleted,
-  lastAction,
-  onNewTodoFormSubmit,
-  onToggleAllTodos,
-  totalTodosCount,
-}) => {
-  const shouldShowToggleButton = totalTodosCount > 0;
+export const TodoHeader = React.memo<Props>(
+  ({
+    isLoading,
+    areAllTodosCompleted,
+    lastAction,
+    onNewTodoFormSubmit,
+    onToggleAllTodos,
+    totalTodosCount,
+  }) => {
+    const shouldShowToggleButton = totalTodosCount > 0;
 
-  return (
-    <header className="todoapp__header">
-      {shouldShowToggleButton && (
-        <button
-          type="button"
-          className={classNames('todoapp__toggle-all', {
-            active: areAllTodosCompleted,
-          })}
-          data-cy="ToggleAllButton"
-          onClick={onToggleAllTodos}
+    return (
+      <header className="todoapp__header">
+        {shouldShowToggleButton && (
+          <button
+            type="button"
+            className={classNames('todoapp__toggle-all', {
+              active: areAllTodosCompleted,
+            })}
+            data-cy="ToggleAllButton"
+            onClick={onToggleAllTodos}
+          />
+        )}
+
+        <NewTodoForm
+          isLoading={isLoading}
+          onFormSubmit={onNewTodoFormSubmit}
+          lastAction={lastAction}
         />
-      )}
+      </header>
+    );
+  },
+);
 
-      <NewTodoForm
-        isLoading={isLoading}
-        onFormSubmit={onNewTodoFormSubmit}
-        lastAction={lastAction}
-      />
-    </header>
-  );
-};
+TodoHeader.displayName = 'TodoHeader';

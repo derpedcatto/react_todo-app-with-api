@@ -10,34 +10,32 @@ type Props = {
   onTodoTitleChange: (todoId: number, newTitle: string) => Promise<boolean>;
 };
 
-export const TodoList: React.FC<Props> = ({
-  todos,
-  tempTodo,
-  onTodoDelete,
-  onTodoSetChecked,
-  onTodoTitleChange,
-}) => {
-  return (
-    <section className="todoapp__main" data-cy="TodoList">
-      {todos.map(todo => (
-        <TodoItem
-          key={todo.id}
-          todo={todo}
-          onTodoDelete={onTodoDelete}
-          onTodoSetChecked={onTodoSetChecked}
-          onTodoTitleChange={onTodoTitleChange}
-        />
-      ))}
+export const TodoList = React.memo<Props>(
+  ({ todos, tempTodo, onTodoDelete, onTodoSetChecked, onTodoTitleChange }) => {
+    return (
+      <section className="todoapp__main" data-cy="TodoList">
+        {todos.map(todo => (
+          <TodoItem
+            key={todo.id}
+            todo={todo}
+            onTodoDelete={onTodoDelete}
+            onTodoSetChecked={onTodoSetChecked}
+            onTodoTitleChange={onTodoTitleChange}
+          />
+        ))}
 
-      {tempTodo && (
-        <TodoItem
-          key={tempTodo.id}
-          todo={tempTodo}
-          onTodoDelete={onTodoDelete}
-          onTodoSetChecked={onTodoSetChecked}
-          onTodoTitleChange={onTodoTitleChange}
-        />
-      )}
-    </section>
-  );
-};
+        {tempTodo && (
+          <TodoItem
+            key={tempTodo.id}
+            todo={tempTodo}
+            onTodoDelete={onTodoDelete}
+            onTodoSetChecked={onTodoSetChecked}
+            onTodoTitleChange={onTodoTitleChange}
+          />
+        )}
+      </section>
+    );
+  },
+);
+
+TodoList.displayName = 'TodoList';

@@ -9,7 +9,7 @@ type Props = {
   onTodoTitleChange: (todoId: number, newTitle: string) => Promise<boolean>;
 };
 
-export const TodoItem: React.FC<Props> = ({
+const TodoItemComponent: React.FC<Props> = ({
   todo,
   onTodoDelete,
   onTodoSetChecked,
@@ -165,3 +165,5 @@ export const TodoItem: React.FC<Props> = ({
     </div>
   );
 };
+
+export const TodoItem = React.memo(TodoItemComponent);

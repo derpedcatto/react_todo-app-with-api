@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { UserWarning } from './UserWarning';
 import { addTodo, deleteTodo, getTodos, updateTodo } from './api/todos';
 import { Todo } from './types/Todo';
@@ -69,63 +69,69 @@ export const App: React.FC = () => {
     }
   };
 
-  const handleNewTodoFormSubmit = async (
-    formResult: Result,
-  ): Promise<boolean> => {
-    setIsLoading(true);
+  const handleNewTodoFormSubmit = useCallback(
+    async (formResult: Result): Promise<boolean> => {
+      setIsLoading(true);
 
-    if (!formResult.isSuccess) {
-      setErrorMessage(formResult.error);
-      setIsLoading(false);
+      if (!formResult.isSuccess) {
+        setErrorMessage(formResult.error);
+        setIsLoading(false);
 
-      return false;
-    }
+        return false;
+      }
 
-    setTempTodo({
-      id: 0,
-      title: formResult.value,
-      userId: USER_ID,
-      completed: false,
-    });
-
-    try {
-      const apiResult = await addTodo({
+      setTempTodo({
+        id: 0,
         title: formResult.value,
         userId: USER_ID,
         completed: false,
       });
 
-      setTodos(currentTodos => [...currentTodos, apiResult]);
-      setTempTodo(null);
+      try {
+        const apiResult = await addTodo({
+          title: formResult.value,
+          userId: USER_ID,
+          completed: false,
+        });
 
-      return true;
-    } catch (error) {
-      setErrorMessage(ErrorMessage.CantAddTodo);
-      setTempTodo(null);
+        setTodos(currentTodos => [...currentTodos, apiResult]);
+        setTempTodo(null);
 
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        return true;
+      } catch (error) {
+        setErrorMessage(ErrorMessage.CantAddTodo);
+        setTempTodo(null);
 
-  const handleTodoDelete = async (todoId: number): Promise<boolean> => {
-    try {
-      await deleteTodo(todoId);
+        return false;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [],
+  );
 
-      setTodos(currentTodos => currentTodos.filter(todo => todo.id !== todoId));
+  const handleTodoDelete = useCallback(
+    async (todoId: number): Promise<boolean> => {
+      try {
+        await deleteTodo(todoId);
 
-      setLastAction(Date.now()); // trigger input refocus
+        setTodos(currentTodos =>
+          currentTodos.filter(todo => todo.id !== todoId),
+        );
 
-      return true;
-    } catch (error) {
-      setErrorMessage(ErrorMessage.CantDeleteTodo);
+        setLastAction(Date.now()); // trigger input refocus
 
-      return false;
-    }
-  };
+        return true;
+      } catch (error) {
+        setErrorMessage(ErrorMessage.CantDeleteTodo);
 
-  const handleClearCompletedTodos = async () => {
+        return false;
+      }
+    },
+    [],
+  );
+
+  const handleClearCompletedTodos = useCallback(async () => {
     try {
       const deletionPromises = todos.map(async todo => {
         if (!todo.completed) {
@@ -151,26 +157,29 @@ export const App: React.FC = () => {
     } catch (error) {
       setErrorMessage(ErrorMessage.CantDeleteTodo);
     }
-  };
+  }, [todos]);
 
-  const handleTodoSetChecked = async (todoId: number, isChecked: boolean) => {
-    try {
-      const updatedTodo = await updateTodo({
-        id: todoId,
-        completed: isChecked,
-      });
+  const handleTodoSetChecked = useCallback(
+    async (todoId: number, isChecked: boolean) => {
+      try {
+        const updatedTodo = await updateTodo({
+          id: todoId,
+          completed: isChecked,
+        });
 
-      setTodos(currentTodos =>
-        currentTodos.map(todo => (todo.id === todoId ? updatedTodo : todo)),
-      );
+        setTodos(currentTodos =>
+          currentTodos.map(todo => (todo.id === todoId ? updatedTodo : todo)),
+        );
 
-      setLastAction(Date.now());
-    } catch (error) {
-      setErrorMessage(ErrorMessage.CantUpdateTodo);
-    }
-  };
+        setLastAction(Date.now());
+      } catch (error) {
+        setErrorMessage(ErrorMessage.CantUpdateTodo);
+      }
+    },
+    [],
+  );
 
-  const handleToggleAllTodos = async () => {
+  const handleToggleAllTodos = useCallback(async () => {
     try {
       let todosToUpdate: Todo[];
       let completedStateToSet: boolean;
@@ -212,31 +221,35 @@ export const App: React.FC = () => {
     }
 
     setLastAction(Date.now());
-  };
+  }, [todos, areAllTodosCompleted]);
 
-  const handleTodoTitleChange = async (todoId: number, newTitle: string) => {
-    if (newTitle === '') {
-      return handleTodoDelete(todoId);
-    }
+  const handleTodoTitleChange = useCallback(
+    async (todoId: number, newTitle: string) => {
+      if (newTitle === '') {
+        return handleTodoDelete(todoId);
+      }
 
-    try {
-      const updatedTodo = await updateTodo({ id: todoId, title: newTitle });
+      try {
+        const updatedTodo = await updateTodo({ id: todoId, title: newTitle });
 
-      setTodos(currentTodos =>
-        currentTodos.map(todo => (todo.id === todoId ? updatedTodo : todo)),
-      );
+        setTodos(currentTodos =>
+          currentTodos.map(todo => (todo.id === todoId ? updatedTodo : todo)),
+        );
 
-      setLastAction(Date.now());
+        setLastAction(Date.now());
 
-      return true;
-    } catch (error) {
-      setErrorMessage(ErrorMessage.CantUpdateTodo);
+        return true;
+      } catch (error) {
+        setErrorMessage(ErrorMessage.CantUpdateTodo);
 
-      return false;
-    }
-  };
+        return false;
+      }
+    },
+    [handleTodoDelete],
+  );
   // #endregion
 
+  // #region Effects
   useEffect(() => {
     handleLoadTodos();
   }, []);
@@ -256,6 +269,7 @@ export const App: React.FC = () => {
   if (!USER_ID) {
     return <UserWarning />;
   }
+  // #endregion
 
   return (
     <div className="todoapp">
