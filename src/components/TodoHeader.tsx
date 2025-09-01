@@ -5,28 +5,33 @@ import { Result } from '../types/Results';
 
 type Props = {
   isLoading: boolean;
-  isTodosListEmpty: boolean;
   areAllTodosCompleted: boolean;
+  totalTodosCount: number;
   lastAction: number;
   onNewTodoFormSubmit: (result: Result) => Promise<boolean>;
+  onToggleAllTodos: () => Promise<void>;
 };
 
 export const TodoHeader: React.FC<Props> = ({
   isLoading,
-  isTodosListEmpty,
   areAllTodosCompleted,
   lastAction,
   onNewTodoFormSubmit,
+  onToggleAllTodos,
+  totalTodosCount,
 }) => {
+  const shouldShowToggleButton = totalTodosCount > 0;
+
   return (
     <header className="todoapp__header">
-      {!isTodosListEmpty && (
+      {shouldShowToggleButton && (
         <button
           type="button"
           className={classNames('todoapp__toggle-all', {
             active: areAllTodosCompleted,
           })}
           data-cy="ToggleAllButton"
+          onClick={onToggleAllTodos}
         />
       )}
 

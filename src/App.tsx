@@ -2,7 +2,13 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useEffect, useMemo, useState } from 'react';
 import { UserWarning } from './UserWarning';
-import { addTodo, deleteTodo, getTodos, USER_ID } from './api/todos';
+import {
+  addTodo,
+  deleteTodo,
+  getTodos,
+  updateTodo,
+  USER_ID,
+} from './api/todos';
 import { Todo } from './types/Todo';
 import { ErrorMessage } from './types/ErrorMessage';
 import { FilterStatus } from './types/FilterStatus';
@@ -37,6 +43,7 @@ export const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [lastAction, setLastAction] = useState(0);
 
+  // #region Memos
   const filteredTodos = useMemo(() => {
     return prepareTodos(todos, filterStatus);
   }, [todos, filterStatus]);
@@ -52,7 +59,9 @@ export const App: React.FC = () => {
   const hasCompletedTodos = useMemo(() => {
     return todos.some(todo => todo.completed);
   }, [todos]);
+  // #endregion
 
+  // #region Handlers
   const handleLoadTodos = async () => {
     setErrorMessage(null);
 
@@ -149,6 +158,91 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleTodoSetChecked = async (todoId: number, isChecked: boolean) => {
+    try {
+      await updateTodo({ id: todoId, completed: isChecked });
+
+      setTodos(currentTodos =>
+        currentTodos.map(todo =>
+          todo.id === todoId ? { ...todo, completed: isChecked } : todo,
+        ),
+      );
+
+      setLastAction(Date.now());
+    } catch (error) {
+      setErrorMessage(ErrorMessage.CantUpdateTodo);
+    }
+  };
+
+  const handleToggleAllTodos = async () => {
+    try {
+      let todosToUpdate: Todo[];
+      let completedStateToSet: boolean;
+
+      if (areAllTodosCompleted) {
+        todosToUpdate = todos;
+        completedStateToSet = false;
+      } else {
+        todosToUpdate = todos.filter(todo => !todo.completed);
+        completedStateToSet = true;
+      }
+
+      const updatePromises = todosToUpdate.map(async todo => {
+        try {
+          return await updateTodo({
+            id: todo.id,
+            completed: completedStateToSet,
+          });
+        } catch (error) {
+          setErrorMessage(ErrorMessage.CantUpdateTodo);
+
+          return todo;
+        }
+      });
+
+      const updatedTodos = await Promise.all(updatePromises);
+
+      setTodos(currentTodos =>
+        currentTodos.map(todo => {
+          const updatedTodo = updatedTodos.find(
+            innerUpdatedTodo => innerUpdatedTodo.id === todo.id,
+          );
+
+          return updatedTodo || todo;
+        }),
+      );
+    } catch (error) {
+      setErrorMessage(ErrorMessage.CantUpdateTodo);
+    }
+
+    setLastAction(Date.now());
+  };
+
+  const handleTodoTitleChange = async (todoId: number, newTitle: string) => {
+    if (newTitle === '') {
+      return handleTodoDelete(todoId);
+    }
+
+    try {
+      await updateTodo({ id: todoId, title: newTitle });
+
+      setTodos(currentTodos =>
+        currentTodos.map(todo =>
+          todo.id === todoId ? { ...todo, title: newTitle } : todo,
+        ),
+      );
+
+      setLastAction(Date.now());
+
+      return true;
+    } catch (error) {
+      setErrorMessage(ErrorMessage.CantUpdateTodo);
+
+      return false;
+    }
+  };
+  // #endregion
+
   useEffect(() => {
     handleLoadTodos();
   }, []);
@@ -176,10 +270,11 @@ export const App: React.FC = () => {
       <div className="todoapp__content">
         <TodoHeader
           isLoading={isLoading}
-          isTodosListEmpty={filteredTodos.length === 0}
           areAllTodosCompleted={areAllTodosCompleted}
+          totalTodosCount={todos.length}
           lastAction={lastAction}
           onNewTodoFormSubmit={handleNewTodoFormSubmit}
+          onToggleAllTodos={handleToggleAllTodos}
         />
 
         {todos.length > 0 && (
@@ -188,6 +283,8 @@ export const App: React.FC = () => {
               todos={filteredTodos}
               tempTodo={tempTodo}
               onTodoDelete={handleTodoDelete}
+              onTodoSetChecked={handleTodoSetChecked}
+              onTodoTitleChange={handleTodoTitleChange}
             />
 
             <TodoFooter

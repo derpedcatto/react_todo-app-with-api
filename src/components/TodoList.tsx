@@ -6,17 +6,27 @@ type Props = {
   todos: Todo[];
   tempTodo: Todo | null;
   onTodoDelete: (todoId: number) => Promise<boolean>;
+  onTodoSetChecked: (todoId: number, isChecked: boolean) => Promise<void>;
+  onTodoTitleChange: (todoId: number, newTitle: string) => Promise<boolean>;
 };
 
 export const TodoList: React.FC<Props> = ({
   todos,
   tempTodo,
   onTodoDelete,
+  onTodoSetChecked,
+  onTodoTitleChange,
 }) => {
   return (
     <section className="todoapp__main" data-cy="TodoList">
       {todos.map(todo => (
-        <TodoItem key={todo.id} todo={todo} onTodoDelete={onTodoDelete} />
+        <TodoItem
+          key={todo.id}
+          todo={todo}
+          onTodoDelete={onTodoDelete}
+          onTodoSetChecked={onTodoSetChecked}
+          onTodoTitleChange={onTodoTitleChange}
+        />
       ))}
 
       {tempTodo && (
@@ -24,6 +34,8 @@ export const TodoList: React.FC<Props> = ({
           key={tempTodo.id}
           todo={tempTodo}
           onTodoDelete={onTodoDelete}
+          onTodoSetChecked={onTodoSetChecked}
+          onTodoTitleChange={onTodoTitleChange}
         />
       )}
     </section>
