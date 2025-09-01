@@ -22,6 +22,7 @@ export const TodoItem: React.FC<Props> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const todoId = todo.id + '';
 
+  // #region Handlers
   const handleOnDelete = async () => {
     setIsLoading(true);
 
@@ -70,6 +71,12 @@ export const TodoItem: React.FC<Props> = ({
 
     setIsLoading(false);
   };
+  // #endregion
+
+  // #region Effects
+  useEffect(() => {
+    setTitle(todo.title);
+  }, [todo.title]);
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -92,7 +99,8 @@ export const TodoItem: React.FC<Props> = ({
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isEditing]);
+  }, [isEditing, todo.title]);
+  // #endregion
 
   return (
     <div

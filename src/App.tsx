@@ -2,13 +2,7 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useEffect, useMemo, useState } from 'react';
 import { UserWarning } from './UserWarning';
-import {
-  addTodo,
-  deleteTodo,
-  getTodos,
-  updateTodo,
-  USER_ID,
-} from './api/todos';
+import { addTodo, deleteTodo, getTodos, updateTodo } from './api/todos';
 import { Todo } from './types/Todo';
 import { ErrorMessage } from './types/ErrorMessage';
 import { FilterStatus } from './types/FilterStatus';
@@ -17,6 +11,7 @@ import { Result } from './types/Results';
 import { TodoHeader } from './components/TodoHeader';
 import { TodoList } from './components/TodoList';
 import { TodoFooter } from './components/TodoFooter';
+import { USER_ID } from './utils/preferences';
 
 const prepareTodos = (todos: Todo[], filterStatus: FilterStatus): Todo[] => {
   return todos.filter(todo => {
@@ -160,12 +155,13 @@ export const App: React.FC = () => {
 
   const handleTodoSetChecked = async (todoId: number, isChecked: boolean) => {
     try {
-      await updateTodo({ id: todoId, completed: isChecked });
+      const updatedTodo = await updateTodo({
+        id: todoId,
+        completed: isChecked,
+      });
 
       setTodos(currentTodos =>
-        currentTodos.map(todo =>
-          todo.id === todoId ? { ...todo, completed: isChecked } : todo,
-        ),
+        currentTodos.map(todo => (todo.id === todoId ? updatedTodo : todo)),
       );
 
       setLastAction(Date.now());
@@ -224,12 +220,10 @@ export const App: React.FC = () => {
     }
 
     try {
-      await updateTodo({ id: todoId, title: newTitle });
+      const updatedTodo = await updateTodo({ id: todoId, title: newTitle });
 
       setTodos(currentTodos =>
-        currentTodos.map(todo =>
-          todo.id === todoId ? { ...todo, title: newTitle } : todo,
-        ),
+        currentTodos.map(todo => (todo.id === todoId ? updatedTodo : todo)),
       );
 
       setLastAction(Date.now());
