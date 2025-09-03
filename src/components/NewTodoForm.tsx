@@ -5,14 +5,9 @@ import { Result } from '../types/Results';
 type Props = {
   onFormSubmit: (result: Result) => Promise<boolean>;
   isLoading: boolean;
-  lastAction: number;
 };
 
-export const NewTodoForm: React.FC<Props> = ({
-  onFormSubmit,
-  isLoading,
-  lastAction,
-}) => {
+export const NewTodoForm: React.FC<Props> = ({ onFormSubmit, isLoading }) => {
   const [todoName, setTodoName] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -44,7 +39,8 @@ export const NewTodoForm: React.FC<Props> = ({
     if (!isLoading && inputRef.current) {
       inputRef.current.focus();
     }
-  }, [isLoading, lastAction]);
+  }, [isLoading]);
+  // lastAction
 
   return (
     <form onSubmit={handleSubmit}>

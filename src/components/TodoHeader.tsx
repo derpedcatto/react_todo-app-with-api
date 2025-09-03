@@ -7,7 +7,6 @@ type Props = {
   isLoading: boolean;
   areAllTodosCompleted: boolean;
   totalTodosCount: number;
-  lastAction: number;
   onNewTodoFormSubmit: (result: Result) => Promise<boolean>;
   onToggleAllTodos: () => Promise<void>;
 };
@@ -16,7 +15,6 @@ export const TodoHeader = React.memo<Props>(
   ({
     isLoading,
     areAllTodosCompleted,
-    lastAction,
     onNewTodoFormSubmit,
     onToggleAllTodos,
     totalTodosCount,
@@ -36,11 +34,7 @@ export const TodoHeader = React.memo<Props>(
           />
         )}
 
-        <NewTodoForm
-          isLoading={isLoading}
-          onFormSubmit={onNewTodoFormSubmit}
-          lastAction={lastAction}
-        />
+        <NewTodoForm isLoading={isLoading} onFormSubmit={onNewTodoFormSubmit} />
       </header>
     );
   },

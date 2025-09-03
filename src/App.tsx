@@ -36,7 +36,6 @@ export const App: React.FC = () => {
   );
   const [tempTodo, setTempTodo] = useState<Todo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [lastAction, setLastAction] = useState(0);
 
   // #region Memos
   const filteredTodos = useMemo(() => {
@@ -112,6 +111,8 @@ export const App: React.FC = () => {
 
   const handleTodoDelete = useCallback(
     async (todoId: number): Promise<boolean> => {
+      setIsLoading(true);
+
       try {
         await deleteTodo(todoId);
 
@@ -119,19 +120,21 @@ export const App: React.FC = () => {
           currentTodos.filter(todo => todo.id !== todoId),
         );
 
-        setLastAction(Date.now()); // trigger input refocus
-
         return true;
       } catch (error) {
         setErrorMessage(ErrorMessage.CantDeleteTodo);
 
         return false;
+      } finally {
+        setIsLoading(false);
       }
     },
     [],
   );
 
   const handleClearCompletedTodos = useCallback(async () => {
+    setIsLoading(true);
+
     try {
       const deletionPromises = todos.map(async todo => {
         if (!todo.completed) {
@@ -152,15 +155,17 @@ export const App: React.FC = () => {
       const results = await Promise.all(deletionPromises);
 
       setTodos(results.filter(todo => todo !== null));
-
-      setLastAction(Date.now()); // trigger input refocus
     } catch (error) {
       setErrorMessage(ErrorMessage.CantDeleteTodo);
+    } finally {
+      setIsLoading(false);
     }
   }, [todos]);
 
   const handleTodoSetChecked = useCallback(
     async (todoId: number, isChecked: boolean) => {
+      setIsLoading(true);
+
       try {
         const updatedTodo = await updateTodo({
           id: todoId,
@@ -170,10 +175,10 @@ export const App: React.FC = () => {
         setTodos(currentTodos =>
           currentTodos.map(todo => (todo.id === todoId ? updatedTodo : todo)),
         );
-
-        setLastAction(Date.now());
       } catch (error) {
         setErrorMessage(ErrorMessage.CantUpdateTodo);
+      } finally {
+        setIsLoading(false);
       }
     },
     [],
@@ -181,6 +186,8 @@ export const App: React.FC = () => {
 
   const handleToggleAllTodos = useCallback(async () => {
     try {
+      setIsLoading(true);
+
       let todosToUpdate: Todo[];
       let completedStateToSet: boolean;
 
@@ -218,9 +225,9 @@ export const App: React.FC = () => {
       );
     } catch (error) {
       setErrorMessage(ErrorMessage.CantUpdateTodo);
+    } finally {
+      setIsLoading(false);
     }
-
-    setLastAction(Date.now());
   }, [todos, areAllTodosCompleted]);
 
   const handleTodoTitleChange = useCallback(
@@ -229,6 +236,8 @@ export const App: React.FC = () => {
         return handleTodoDelete(todoId);
       }
 
+      setIsLoading(true);
+
       try {
         const updatedTodo = await updateTodo({ id: todoId, title: newTitle });
 
@@ -236,13 +245,13 @@ export const App: React.FC = () => {
           currentTodos.map(todo => (todo.id === todoId ? updatedTodo : todo)),
         );
 
-        setLastAction(Date.now());
-
         return true;
       } catch (error) {
         setErrorMessage(ErrorMessage.CantUpdateTodo);
 
         return false;
+      } finally {
+        setIsLoading(false);
       }
     },
     [handleTodoDelete],
@@ -280,7 +289,6 @@ export const App: React.FC = () => {
           isLoading={isLoading}
           areAllTodosCompleted={areAllTodosCompleted}
           totalTodosCount={todos.length}
-          lastAction={lastAction}
           onNewTodoFormSubmit={handleNewTodoFormSubmit}
           onToggleAllTodos={handleToggleAllTodos}
         />

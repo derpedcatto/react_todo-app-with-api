@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
 import { Todo } from '../types/Todo';
 import classNames from 'classnames';
 
@@ -9,161 +9,182 @@ type Props = {
   onTodoTitleChange: (todoId: number, newTitle: string) => Promise<boolean>;
 };
 
-const TodoItemComponent: React.FC<Props> = ({
-  todo,
-  onTodoDelete,
-  onTodoSetChecked,
-  onTodoTitleChange,
-}) => {
-  const [isLoading, setIsLoading] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [title, setTitle] = useState(todo.title);
+export const TodoItem = memo<Props>(
+  ({ todo, onTodoDelete, onTodoSetChecked, onTodoTitleChange }) => {
+    const [isLoading, setIsLoading] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [title, setTitle] = useState(todo.title);
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const todoId = todo.id + '';
+    const inputRef = useRef<HTMLInputElement>(null);
+    const isSubmittingRef = useRef(false);
 
-  // #region Handlers
-  const handleOnDelete = async () => {
-    setIsLoading(true);
+    // #region Handlers
+    const handleOnDelete = async () => {
+      setIsLoading(true);
 
-    const isSuccess = await onTodoDelete(todo.id);
+      try {
+        const isSuccess = await onTodoDelete(todo.id);
 
-    if (!isSuccess) {
-      setIsLoading(false);
-    }
-  };
-
-  const handleOnSetCompleted = async () => {
-    setIsLoading(true);
-
-    await onTodoSetChecked(todo.id, !todo.completed);
-
-    setIsLoading(false);
-  };
-
-  const handleTodoTitleChange = async (event?: React.FormEvent) => {
-    if (event) {
-      event.preventDefault();
-    }
-
-    if (!inputRef.current) {
-      return;
-    }
-
-    const formattedTitle = inputRef.current?.value.trim();
-
-    if (formattedTitle === todo.title) {
-      setIsEditing(false);
-
-      return;
-    }
-
-    setIsLoading(true);
-
-    const isSuccess = await onTodoTitleChange(todo.id, formattedTitle);
-
-    if (isSuccess) {
-      setTitle(formattedTitle);
-      setIsEditing(false);
-    } else {
-      setTitle(todo.title);
-    }
-
-    setIsLoading(false);
-  };
-  // #endregion
-
-  // #region Effects
-  useEffect(() => {
-    setTitle(todo.title);
-  }, [todo.title]);
-
-  useEffect(() => {
-    if (isEditing && inputRef.current) {
-      inputRef.current.focus();
-    }
-  }, [isEditing]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsEditing(false);
-        setTitle(todo.title);
+        if (!isSuccess) {
+          setIsLoading(false);
+        }
+      } catch (error) {
+        setIsLoading(false);
       }
     };
 
-    if (isEditing) {
-      document.addEventListener('keydown', handleKeyDown);
-    }
+    const handleOnSetCompleted = async () => {
+      setIsLoading(true);
 
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown);
+      await onTodoSetChecked(todo.id, !todo.completed);
+
+      setIsLoading(false);
     };
-  }, [isEditing, todo.title]);
-  // #endregion
 
-  return (
-    <div
-      data-cy="Todo"
-      className={classNames('todo', { completed: todo.completed })}
-    >
-      {/*eslint-disable-next-line jsx-a11y/label-has-associated-control*/}
-      <label className="todo__status-label" htmlFor={todoId}>
-        <input
-          id={todoId}
-          data-cy="TodoStatus"
-          type="checkbox"
-          className="todo__status"
-          checked={todo.completed}
-          onChange={handleOnSetCompleted}
-        />
-      </label>
+    const handleTodoTitleChange = async (event?: React.FormEvent) => {
+      if (event) {
+        event.preventDefault();
+      }
 
-      {isEditing ? (
-        <form onSubmit={handleTodoTitleChange}>
-          <input
-            ref={inputRef}
-            data-cy="TodoTitleField"
-            type="text"
-            className="todo__title-field"
-            placeholder="Empty todo will be deleted"
-            value={title}
-            onBlur={handleTodoTitleChange}
-            onChange={event => setTitle(event.target.value)}
-          />
-        </form>
-      ) : (
-        <>
-          <span
-            data-cy="TodoTitle"
-            className="todo__title"
-            onDoubleClick={() => setIsEditing(!isEditing)}
-          >
-            {title}
-          </span>
+      if (!inputRef.current || isSubmittingRef.current) {
+        return;
+      }
 
-          <button
-            type="button"
-            className="todo__remove"
-            data-cy="TodoDelete"
-            onClick={handleOnDelete}
-          >
-            ×
-          </button>
-        </>
-      )}
+      isSubmittingRef.current = true;
 
+      const formattedTitle = inputRef.current?.value.trim();
+
+      if (formattedTitle === todo.title) {
+        setIsEditing(false);
+
+        isSubmittingRef.current = false;
+
+        return;
+      }
+
+      setIsLoading(true);
+
+      try {
+        const isSuccess = await onTodoTitleChange(todo.id, formattedTitle);
+
+        if (isSuccess) {
+          setTitle(formattedTitle);
+          setIsEditing(false);
+        }
+      } catch (error) {
+      } finally {
+        setIsLoading(false);
+        isSubmittingRef.current = false;
+      }
+    };
+
+    const handleBlur = () => {
+      if (isSubmittingRef.current) {
+        return;
+      }
+
+      handleTodoTitleChange();
+    };
+
+    const handleDoubleClick = () => {
+      setIsEditing(!isEditing);
+    };
+    // #endregion
+
+    // #region Effects
+    useEffect(() => {
+      setTitle(todo.title);
+    }, [todo.title]);
+
+    useEffect(() => {
+      if (isEditing && inputRef.current) {
+        inputRef.current.focus();
+      }
+    }, [isEditing]);
+
+    useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setIsEditing(false);
+          setTitle(todo.title);
+          setIsLoading(false);
+          isSubmittingRef.current = false;
+        }
+      };
+
+      if (isEditing) {
+        document.addEventListener('keydown', handleKeyDown);
+      }
+
+      return () => {
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    }, [isEditing, todo.title]);
+    // #endregion
+
+    return (
       <div
-        data-cy="TodoLoader"
-        className={classNames('modal overlay', {
-          'is-active': todo.id === 0 || isLoading,
-        })}
+        data-cy="Todo"
+        className={classNames('todo', { completed: todo.completed })}
       >
-        <div className="modal-background has-background-white-ter" />
-        <div className="loader" />
-      </div>
-    </div>
-  );
-};
+        {/*eslint-disable-next-line jsx-a11y/label-has-associated-control*/}
+        <label className="todo__status-label" htmlFor={todo.id.toString()}>
+          <input
+            id={todo.id.toString()}
+            data-cy="TodoStatus"
+            type="checkbox"
+            className="todo__status"
+            checked={todo.completed}
+            onChange={handleOnSetCompleted}
+          />
+        </label>
 
-export const TodoItem = React.memo(TodoItemComponent);
+        {isEditing ? (
+          <form onSubmit={handleTodoTitleChange}>
+            <input
+              ref={inputRef}
+              data-cy="TodoTitleField"
+              type="text"
+              className="todo__title-field"
+              placeholder="Empty todo will be deleted"
+              value={title}
+              onBlur={handleBlur}
+              onChange={event => setTitle(event.target.value)}
+            />
+          </form>
+        ) : (
+          <>
+            <span
+              data-cy="TodoTitle"
+              className="todo__title"
+              onDoubleClick={handleDoubleClick}
+            >
+              {title}
+            </span>
+
+            <button
+              type="button"
+              className="todo__remove"
+              data-cy="TodoDelete"
+              onClick={handleOnDelete}
+            >
+              ×
+            </button>
+          </>
+        )}
+
+        <div
+          data-cy="TodoLoader"
+          className={classNames('modal overlay', {
+            'is-active': todo.id === 0 || isLoading,
+          })}
+        >
+          <div className="modal-background has-background-white-ter" />
+          <div className="loader" />
+        </div>
+      </div>
+    );
+  },
+);
+
+TodoItem.displayName = 'TodoItem';

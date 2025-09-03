@@ -3,7 +3,7 @@ import { client } from '../utils/fetchClient';
 import { USER_ID } from '../utils/preferences';
 
 type AddTodoParams = Omit<Todo, 'id'>;
-type UpdateTodoParams = Pick<Todo, 'id'> & Partial<Omit<Todo, 'id' | 'userId'>>;
+type UpdateTodoParams = Pick<Todo, 'id'> & Partial<Todo>;
 
 export const getTodos = () => {
   return client.get<Todo[]>(`/todos?userId=${USER_ID}`);

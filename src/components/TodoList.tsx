@@ -1,4 +1,4 @@
-import React from 'react';
+import { memo } from 'react';
 import { Todo } from '../types/Todo';
 import { TodoItem } from './TodoItem';
 
@@ -10,7 +10,7 @@ type Props = {
   onTodoTitleChange: (todoId: number, newTitle: string) => Promise<boolean>;
 };
 
-export const TodoList = React.memo<Props>(
+export const TodoList = memo<Props>(
   ({ todos, tempTodo, onTodoDelete, onTodoSetChecked, onTodoTitleChange }) => {
     return (
       <section className="todoapp__main" data-cy="TodoList">
