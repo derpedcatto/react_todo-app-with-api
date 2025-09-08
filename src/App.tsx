@@ -258,27 +258,13 @@ export const App: React.FC = () => {
   );
   // #endregion
 
-  // #region Effects
   useEffect(() => {
     handleLoadTodos();
   }, []);
 
-  useEffect(() => {
-    if (!errorMessage) {
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setErrorMessage(null);
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, [errorMessage]);
-
   if (!USER_ID) {
     return <UserWarning />;
   }
-  // #endregion
 
   return (
     <div className="todoapp">
@@ -293,7 +279,7 @@ export const App: React.FC = () => {
           onToggleAllTodos={handleToggleAllTodos}
         />
 
-        {todos.length > 0 && (
+        {!!todos.length && (
           <>
             <TodoList
               todos={filteredTodos}

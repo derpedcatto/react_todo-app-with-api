@@ -1,6 +1,6 @@
 import classNames from 'classnames';
 import { ErrorMessage } from '../types/ErrorMessage';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 type Props = {
   errorMessage: ErrorMessage | null;
@@ -11,6 +11,18 @@ export const ErrorNotification: React.FC<Props> = ({
   errorMessage,
   onHideError,
 }) => {
+  useEffect(() => {
+    if (!errorMessage) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      onHideError();
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [errorMessage, onHideError]);
+
   return (
     <div
       data-cy="ErrorNotification"
